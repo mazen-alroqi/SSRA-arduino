@@ -1,0 +1,46 @@
+#include <LiquidCrystal.h>
+
+//connections
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+const int switchPin = 6;
+const int sensorPin = A0;
+
+void setup() {
+
+  //LCD initialising
+  lcd.begin(16, 2);
+  lcd.print("initialising...");
+
+  Serial.begin(9600); // open a serial port
+  delay(1000);        // delay before the start
+  lcd.clear();        // clearing LCD after initialising
+}
+
+void loop() {
+
+  //calculating and storing values
+  int sensorVal = analogRead(sensorPin);      // reads the sensor value
+  float voltage = (sensorVal / 1024.0) * 5.0; // converts the sensor value to voltage
+  float temperature = (voltage - .5) * 100;   // converts voltage to temperature
+
+  //showing temperature on LCD
+  lcd.print("Temperature:");
+  lcd.setCursor(0, 1);
+  lcd.print(temperature);
+  lcd.print(" C");
+
+  //printing values
+  Serial.print("Sensor value: ");
+  Serial.print(sensorVal);
+  Serial.print(" units");          // sends sensor value to PC
+  Serial.print(", Voltage: ");
+  Serial.print(voltage);
+  Serial.print("V");               // sends the voltage value to PC
+  Serial.print(", Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" C");            // sends the temperature value to the PC and enters a line break
+
+  //speed of value calculation and clearing the LCD for next loop
+  delay(1000);
+  lcd.clear();
+}
