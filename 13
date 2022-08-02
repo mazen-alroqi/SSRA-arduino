@@ -1,0 +1,94 @@
+//libraries
+#include <LiquidCrystal.h>
+#include <OneWire.h> 
+#include <DallasTemperature.h>
+
+//connections
+#define ONE_WIRE_BUS 10
+#define RELAY_PIN 8
+#define BUTTON 13
+
+//usage
+OneWire oneWire(ONE_WIRE_BUS); 
+DallasTemperature sensors(&oneWire);
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+//variables to change
+float setPeltier = 35.00; //the desired temperature from the peltier
+float delta = 2.00;       //difference below the desired temperature... e.g. 35.00 - 2.00 = 33.00 degrees, anything below it'll heat up
+int switchState = 0;      //default switch state (reading state / working state)
+
+void setup(void) 
+{
+  //start serial port 
+  Serial.begin(9600);
+  Serial.println("Initialising...");
+ 
+  //initiate temperature sensors
+  sensors.begin();
+
+  //initiate the relay module
+  pinMode(RELAY_PIN, OUTPUT);
+
+  //initiate the button
+  pinMode(BUTTON, INPUT);
+ 
+  //LCD initialising
+  lcd.begin(16, 2);
+  lcd.print("Initialising...");
+  lcd.clear();
+} 
+
+void loop(void) 
+{
+  switchState = digitalRead(13);
+  //storing temperature
+  float temperature = sensors.getTempCByIndex(0);
+     
+  //retrieving temperature
+  sensors.requestTemperatures();
+    
+  //sending the temperature to the PC
+  Serial.print("Temperature: ");
+  Serial.print(temperature); 
+  if (switchState = 0) {Serial.println(" ºC, HEATING: OFF");}
+  else {Serial.println(" ºC");}
+
+  if (switchState = 0) {
+  //sending values to LCD
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Temperature:");
+  lcd.setCursor(0,1);
+  lcd.print(temperature);
+  lcd.print(" ");
+  lcd.print((char)223);
+  lcd.print("C");
+  } else {
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("TMP: ");
+  lcd.print(temperature);
+  lcd.print(" ");
+  lcd.print((char)223);
+  lcd.print("C");
+  lcd.setCursor(0,1);
+  lcd.print("PELTIER IS OFF");
+    }
+    
+  //change the value of the peltier
+  if (switchState = 0) {
+  if (temperature > setPeltier)                {digitalWrite(RELAY_PIN, HIGH);} //high turns off the power to the peltier in the configuration
+  if (temperature < (setPeltier - delta))      {digitalWrite(RELAY_PIN, LOW);}  //low turns on the power to the peltier in the configuration
+  } else {
+    digitalWrite(RELAY_PIN, HIGH);
+    }
+  
+  //set Peltier temperature from serial
+  if (Serial.available()) {
+    String x = Serial.readStringUntil('\n');
+    float y = x.toFloat();
+    setPeltier = y;
+    Serial.println("----------Temperature is set to: " + x + " ºC----------"); //it could work?
+  }
+} 
