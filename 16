@@ -1,0 +1,131 @@
+//libraries
+#include <LiquidCrystal.h>
+#include <OneWire.h> 
+#include <DallasTemperature.h>
+
+//connections
+#define ONE_WIRE_BUS 10
+#define RELAY_PIN 8
+#define BUTTON 13
+
+//usage
+OneWire oneWire(ONE_WIRE_BUS); 
+DallasTemperature sensors(&oneWire);
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+//variables to change
+float setPeltier = 10.00; //the desired temperature from the peltier
+int switchState = 0;      //button state (button pressed / unpressed)
+int state = true;         //device state (reading mode / working mode)
+
+
+void setup(void) 
+{
+  //start serial port 
+  Serial.begin(9600);
+  Serial.println("Initialising...");
+ 
+  //initiate the temperature sensors
+  sensors.begin();
+
+  //initiate the relay module
+  pinMode(RELAY_PIN, OUTPUT);
+
+  //initiate the button
+  pinMode(BUTTON, INPUT);
+ 
+  //initiate the LCD
+  lcd.begin(16, 2);
+  lcd.print("Initialising...");
+  lcd.clear();
+} 
+
+void loop(void) 
+{
+  //button toggle (one second hold)
+  switchState = digitalRead(13);
+  if (switchState == HIGH) {
+    if (state == true) {
+      state = false;
+      Serial.println("----------READING MODE----------");
+      delay(1000); //this is to ensure no double toggle with one press
+      }
+    else {
+      state = true;
+      Serial.println("----------WORKING MODE----------");
+      delay(1000); //this is to ensure no double toggle with one press
+      }
+  }
+  
+  //storing temperature
+  float temperature = sensors.getTempCByIndex(0);
+     
+  //retrieving temperature
+  sensors.requestTemperatures();
+    
+  //sending the temperature to the PC
+  String x = String(temperature);
+  String y = String(setPeltier);
+  Serial.print(x + " ");
+  Serial.print(y + " ");
+
+  //sending values to LCD
+  lcd.clear();
+  lcd.setCursor(0,0);
+  if (state == true) {      //during working mode; LCD shows this
+  lcd.print("Temperature: ");
+  lcd.setCursor(0,1);
+  lcd.print(temperature);
+  lcd.print("/");
+  lcd.print(setPeltier, 0);
+  lcd.print(" ");
+  lcd.print((char)223);
+  lcd.print("C");
+  } else {                  //during reading mode; LCD shows this
+  lcd.print("TMP: ");
+  lcd.print(temperature);
+  lcd.print("/");
+  lcd.print(setPeltier, 0);
+  lcd.print(" ");
+  lcd.print((char)223);
+  lcd.print("C");
+  lcd.setCursor(0,1);
+  lcd.print("READING MODE");
+  }
+    
+  //change the value of the peltier
+  if (state == true) {
+    
+  if (temperature > setPeltier or temperature == setPeltier) {
+    digitalWrite(RELAY_PIN, HIGH);
+    Serial.println("0 ");
+    } //high turns off the power to the peltier in the configuration
+    
+  if (temperature < setPeltier) {
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("50 ");
+    } //low turns on the power to the peltier in the configuration
+   }
+   
+  else {
+    digitalWrite(RELAY_PIN, HIGH);
+    Serial.println("0 ");
+    } //turns it off during reading mode
+  
+  //set Peltier temperature from serial input
+  if (Serial.available()) {
+    String x = Serial.readStringUntil('\n');
+    float y = x.toFloat();
+    setPeltier = y;
+    //Serial.println("----------Temperature is set to: " + x + " ºC----------");
+  }
+  delay(350); //delay to round off to around an update per second (since the retrieval of the temperature takes about 650ms (& varies))
+}
+
+/* TO-DO LIST:
+ * TIME-BASED COOL-DOWN (instead of the temperature based cool-down) ?
+ * LCD SHOWS THE COOL-DOWN ?
+ * SHOW EVERY DATA YOU CAN MUSTER IN THE SERIAL |
+ * LOWER THE OUTFLOW SYRINGE SO THERE'S LESS WATER IN THE PETRI-DISH |
+ * SLOW THE FLOW OF MEDIUM |
+ * */
