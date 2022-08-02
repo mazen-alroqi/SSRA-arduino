@@ -1,0 +1,72 @@
+#include <LiquidCrystal.h>
+
+/********************************************************************/
+// First we include the libraries
+#include <OneWire.h> 
+#include <DallasTemperature.h>
+/********************************************************************/
+// Data wire is plugged into pin 2 on the Arduino 
+#define ONE_WIRE_BUS 10
+/********************************************************************/
+// Setup a oneWire instance to communicate with any OneWire devices  
+// (not just Maxim/Dallas temperature ICs) 
+OneWire oneWire(ONE_WIRE_BUS); 
+/********************************************************************/
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+/********************************************************************/ 
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+//James' code (but tweaked)
+#define LED_PIN 6
+#define POTENTIOMETER_PIN A0
+
+void setup(void) 
+{ 
+ // start serial port 
+ Serial.begin(9600);
+ sensors.begin();
+ Serial.println("Initialising"); 
+ //LCD initialising
+ lcd.begin(16, 2);
+ lcd.print("initialising...");
+ pinMode(LED_PIN, OUTPUT);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+ delay(500);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+ delay(500);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+ lcd.clear();
+} 
+
+void loop(void) 
+{
+ //James' code (but tweaked)
+ int potentiometerValue = analogRead(POTENTIOMETER_PIN);
+ int brightness = potentiometerValue / 4;
+ analogWrite(LED_PIN, brightness);
+ Serial.print("brightness level: ");
+ Serial.print(brightness);
+ Serial.print("/255");
+ Serial.print(", "); 
+ sensors.requestTemperatures(); 
+ Serial.print("Celsius temperature: ");
+ // Why "byIndex"? You can have more than one IC on the same bus. 0 refers to the first IC on the wire
+ Serial.println(sensors.getTempCByIndex(0));
+ //sending values to LCD 
+ lcd.clear();
+ lcd.setCursor(0,0);
+ lcd.print("Temperature:");
+ lcd.setCursor(0,1);
+ lcd.print(sensors.getTempCByIndex(0));
+ lcd.print(" ");
+ lcd.print((char)223);
+ lcd.print("C");
+ delay(350);
+} 
