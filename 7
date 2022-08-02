@@ -1,0 +1,88 @@
+//LCD library
+#include <LiquidCrystal.h>
+
+//taken from James for the potentiometer
+#define LED_PIN 10
+#define POTENTIOMETER_PIN A1 
+
+
+//connections
+const int sensorPin = A0;
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+void setup() {
+  //open a serial port
+  Serial.begin(9600);
+  
+  //LCD initialising
+  lcd.begin(16, 2);
+  lcd.print("initialising...");
+
+  //James' potentiometer initialising
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH); // test
+  delay(500);
+  digitalWrite(LED_PIN, LOW); // test
+  delay(500);
+  digitalWrite(LED_PIN, HIGH); // test
+  delay(500);
+  digitalWrite(LED_PIN, LOW); // test
+  delay(500);
+  digitalWrite(LED_PIN, HIGH); // test
+  delay(500);
+  digitalWrite(LED_PIN, LOW); // test
+
+  //LCD screen clear before starting
+  lcd.clear();
+}
+
+void loop() {
+  //stores the value of the temperature sensor
+  int sensorVal = analogRead(sensorPin);
+  //converts the reading to voltage
+  float voltage = (sensorVal/1024.0) * 5.0;
+  // converts the voltage to temperature in degrees
+  float temperature = (voltage - .5) * 100;
+  pinMode(6, OUTPUT);
+  analogWrite(6, 1024);
+  
+  /*
+  //this could(?) work for the peltier module
+  int peltier = 6;
+  if(temperature < 30.00){
+    analogWrite(peltier, 51); // Look first on how much voltage your peltier unit can handle 255 = 5V
+  }else if(temperature < 30.00 && temperature > 25.00){
+    analogWrite(peltier, 36);
+  }else{
+    analogWrite(peltier, 0);
+  } 
+  */
+  
+  //James' code (but tweaked)
+  int potentiometerValue = analogRead(POTENTIOMETER_PIN);
+  int brightness = potentiometerValue / 4;
+  analogWrite(LED_PIN, brightness);
+  
+  //sending values to PC
+  Serial.print("Sensor value: ");
+  Serial.print(sensorVal);
+  Serial.print(", Voltage: ");
+  Serial.print(voltage);
+  Serial.print("V");
+  Serial.print(", Temperature: ");
+  Serial.print(temperature);
+  Serial.print("C");
+  Serial.print(" Potentiometer value: ");
+  Serial.println(potentiometerValue);
+  
+  //sending values to LCD
+  lcd.setCursor(0,0);
+  lcd.print("Temperature:");
+  lcd.setCursor(0,1);
+  lcd.print(temperature);
+  lcd.print(" ");
+  lcd.print((char)223);
+  lcd.print("C");
+  delay(1000);
+  lcd.clear();
+}
