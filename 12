@@ -1,0 +1,31 @@
+//James' code (but tweaked)
+#define LED_PIN 6
+#define POTENTIOMETER_PIN A0
+
+void setup(){ 
+ // start serial port 
+ Serial.begin(9600);
+ Serial.println("Initialising"); 
+ pinMode(LED_PIN, OUTPUT);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+ delay(500);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+ delay(500);
+ digitalWrite(LED_PIN, HIGH); // test
+ delay(500);
+ digitalWrite(LED_PIN, LOW); // test
+} 
+void loop() {
+ //James' code (but tweaked)
+ int potentiometerValue = analogRead(POTENTIOMETER_PIN);
+ int brightness = potentiometerValue / 4;
+ analogWrite(LED_PIN, brightness);
+ Serial.print("brightness level: ");
+ Serial.print(brightness);
+ Serial.println("/255");
+ delay(100);
+}
